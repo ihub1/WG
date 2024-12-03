@@ -78,6 +78,17 @@
       color: #eee;
       background-color: #444; 
     }
+
+    #timer {
+      margin-top: 10px; 
+      font-size: 14px;
+    }
+
+    button:disabled {
+      opacity: 0.5; 
+      cursor: default; 
+      pointer-events: none; 
+    }
   </style>
 </head>
 <body>
@@ -92,6 +103,7 @@
 
     <input type="text" id="filename-input" placeholder="Enter Customer's name" /> 
     <button id="download-btn" disabled>Download conf</button> 
+    <div id="timer"></div> 
   </div>
 
   <script>
@@ -100,6 +112,35 @@
     const downloadBtn = document.getElementById('download-btn'); 
     const decodedTextDiv = document.getElementById('decoded-text');
     const filenameInput = document.getElementById('filename-input'); 
+    const timerDiv = document.getElementById('timer'); 
+
+    let downloadTimer; 
+
+    function saveTimerState(seconds) {
+      const timerData = {
+        remainingSeconds: seconds,
+        startTime: Date.now(), 
+      };
+      localStorage.setItem('downloadTimer', JSON.stringify(timerData));
+    }
+
+    function getTimerState() {
+      const timerData = localStorage.getItem('downloadTimer');
+      return timerData ? JSON.parse(timerData) : null;
+    }
+
+    const savedTimer = getTimerState();
+    if (savedTimer) {
+      const elapsedSeconds = Math.floor((Date.now() - savedTimer.startTime) / 1000);
+      const remainingSeconds = Math.max(0, savedTimer.remainingSeconds - elapsedSeconds);
+
+      if (remainingSeconds > 0) {
+        downloadBtn.disabled = true;
+        qrInput.disabled = true; // Disable input when timer is running
+        decodeBtn.disabled = true; // Disable decode button when timer is running
+        startTimer(remainingSeconds);
+      }
+    }
 
     decodeBtn.addEventListener('click', () => {
       if (qrInput.files.length > 0) {
@@ -153,7 +194,36 @@
 
       link.click(); 
       URL.revokeObjectURL(url); 
+
+      // Disable input and decode button
+      qrInput.disabled = true;
+      decodeBtn.disabled = true;
+
+      downloadBtn.disabled = true;
+      startTimer(30); 
     });
+
+    function startTimer(seconds) {
+      let remainingSeconds = seconds;
+      timerDiv.textContent = `Wait for ${remainingSeconds} seconds before downloading another file.`; 
+
+      downloadTimer = setInterval(() => {
+        remainingSeconds--;
+        timerDiv.textContent = `Wait for ${remainingSeconds} seconds before downloading another file.`;
+        saveTimerState(remainingSeconds); 
+
+        if (remainingSeconds <= 0) {
+          clearInterval(downloadTimer);
+          downloadBtn.disabled = false; 
+          timerDiv.textContent = ""; 
+          localStorage.removeItem('downloadTimer'); 
+
+          // Enable input and decode button after timer finishes
+          qrInput.disabled = false;
+          decodeBtn.disabled = false;
+        }
+      }, 1000); 
+    }
   </script>
 </body>
 </html>
