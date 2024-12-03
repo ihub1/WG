@@ -1,6 +1,6 @@
 # iCode WG Tool v1.0
 
-It's a simple tool that takes your WG conf, converts it into plain text, and saves it as a `.conf` file.
+It's a simple tool that takes your WG QR code, converts it into plain text, and saves it as a `.conf` file.
 
 **FEATURES:**
 
