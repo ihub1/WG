@@ -128,7 +128,7 @@
       const textContent = decodedTextDiv.textContent;
       const filename = "wg0.conf"; 
 
-      const blob = new Blob([textContent], { type: "text/plain" });
+      const blob = new Blob([textContent], { type: "application/x-config" }); 
       const url = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
