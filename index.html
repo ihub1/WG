@@ -2,146 +2,160 @@
 <html>
 <head>
   <title>iCode WG Tool V1.1</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"> <!-- Font Awesome for icons -->
   <style>
+    /* Modern Theme */
     body {
-      font-family: sans-serif;
+      font-family: 'Arial', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background-color: #222; 
-      color: #eee; 
+      background: linear-gradient(135deg, #007bff, #6610f2);
+      color: #fff;
       margin: 0;
-      padding: 10px; 
+      padding: 10px;
     }
 
     h1 {
-      color: #007bff; 
-      font-size: 24px;
+      color: #fff;
+      font-size: 26px;
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
     }
 
     #container {
-      background-color: #333; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
       text-align: center;
-      width: 90%; 
-      max-width: 400px; 
+      width: 90%;
+      max-width: 400px;
+    }
+
+    input[type="file"] {
+      display: none; /* Hide the default file input */
+    }
+
+    .file-label {
+      display: inline-block;
+      background: #007bff;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .file-label:hover {
+      background: #0056b3;
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+
+    input[type="text"] {
+      margin-top: 10px;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      width: calc(100% - 20px);
+      font-size: 14px;
+      background: #f8f9fa;
+      color: #333;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     #decoded-text {
       margin-top: 15px;
-      padding: 10px;
-      border: 1px solid #555; 
-      border-radius: 4px;
+      padding: 15px;
+      border-radius: 8px;
       min-height: 40px;
-      width: calc(100% - 20px); 
+      max-height: 150px; /* Limit the height */
+      overflow-y: auto; /* Enable vertical scrolling if content overflows */
+      width: calc(100% - 30px);
       font-family: monospace;
-      white-space: pre-wrap; 
-      font-size: 14px; 
-      overflow-x: auto; 
-      color: #eee; 
-      background-color: #444;
+      white-space: pre-wrap; /* Preserve formatting but allow wrapping */
+      font-size: 14px;
+      background-color: #222;
+      color: #fff;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     button {
-      background-color: #007bff;
-      border: none;
+      display: block; /* Makes each button a block-level element */
+      width: 100%; /* Full width of container */
+      max-width: 300px; /* Optional: limit maximum button width */
+      margin: 10px 0; /* Spacing between buttons */
+      background: #007bff;
       color: white;
       padding: 10px 15px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
+      border: none;
+      border-radius: 8px;
       font-size: 16px;
-      margin: 4px 2px;
       cursor: pointer;
-      border-radius: 5px;
-      width: 100%; 
-      box-sizing: border-box; 
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       transition: all 0.3s ease;
     }
 
     button:hover {
-      transform: translateY(-2px); 
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+      background: #0056b3;
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
     }
 
-    #filename-input {
-      margin-top: 10px; 
-      padding: 8px;
-      border: 1px solid #555;
-      border-radius: 4px;
-      width: calc(100% - 20px);
-      color: #eee;
-      background-color: #444; 
-    }
-
-    #timer {
-      margin-top: 10px; 
-      font-size: 14px;
+    button i {
+      margin-right: 8px;
     }
 
     button:disabled {
-      opacity: 0.5; 
-      cursor: default; 
-      pointer-events: none; 
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #timer {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ffc107;
     }
   </style>
 </head>
 <body>
   <div id="container">
-    <h1>iCode WG Tool V1.1</h1> 
+    <h1>iCode WG Tool V1.1</h1>
 
+    <!-- File Input Modernized -->
+    <label for="qr-input" class="file-label"><i class="fas fa-upload"></i> Choose QR Code Image</label>
     <input type="file" id="qr-input" accept="image/*" />
-    <button id="decode-btn">Decode</button>
 
-    <h2>Decoded Text:</h2>
+    <button id="decode-btn"><i class="fas fa-qrcode"></i> Decode</button>
+
+    <h2 style="color: #ffc107;">Decoded Text:</h2>
     <div id="decoded-text"></div>
 
-    <input type="text" id="filename-input" placeholder="Enter Customer's name" /> 
-    <button id="download-btn" disabled>Download conf</button> 
-    <div id="timer"></div> 
+    <input type="text" id="filename-input" placeholder="Enter Customer's name" />
+    <button id="download-btn" disabled><i class="fas fa-download"></i> Download conf</button>
+    <button id="download-zip-btn" disabled><i class="fas fa-file-archive"></i> Download Zip</button>
+    <div id="timer"></div>
   </div>
 
   <script>
     const qrInput = document.getElementById('qr-input');
     const decodeBtn = document.getElementById('decode-btn');
-    const downloadBtn = document.getElementById('download-btn'); 
     const decodedTextDiv = document.getElementById('decoded-text');
-    const filenameInput = document.getElementById('filename-input'); 
-    const timerDiv = document.getElementById('timer'); 
+    const downloadBtn = document.getElementById('download-btn');
+    const downloadZipBtn = document.getElementById('download-zip-btn');
+    const filenameInput = document.getElementById('filename-input');
 
-    let downloadTimer; 
-
-    function saveTimerState(seconds) {
-      const timerData = {
-        remainingSeconds: seconds,
-        startTime: Date.now(), 
-      };
-      localStorage.setItem('downloadTimer', JSON.stringify(timerData));
-    }
-
-    function getTimerState() {
-      const timerData = localStorage.getItem('downloadTimer');
-      return timerData ? JSON.parse(timerData) : null;
-    }
-
-    const savedTimer = getTimerState();
-    if (savedTimer) {
-      const elapsedSeconds = Math.floor((Date.now() - savedTimer.startTime) / 1000);
-      const remainingSeconds = Math.max(0, savedTimer.remainingSeconds - elapsedSeconds);
-
-      if (remainingSeconds > 0) {
-        downloadBtn.disabled = true;
-        qrInput.disabled = true; // Disable input when timer is running
-        decodeBtn.disabled = true; // Disable decode button when timer is running
-        startTimer(remainingSeconds);
-      }
-    }
-
+    // Decode QR Code
     decodeBtn.addEventListener('click', () => {
       if (qrInput.files.length > 0) {
         const qrCodeData = qrInput.files[0];
@@ -150,20 +164,26 @@
         formData.append('file', qrCodeData);
 
         fetch('https://api.qrserver.com/v1/read-qr-code/', {
-            method: 'POST',
-            body: formData
+          method: 'POST',
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
           })
-          .then(response => response.json())
-          .then(data => {
-            if (data && data[0] && data[0].symbol && data[0].symbol[0] && data[0].symbol[0].data) {
-              decodedTextDiv.textContent = data[0].symbol[0].data;
-
-              downloadBtn.disabled = false; 
+          .then((data) => {
+            const decodedData = data?.[0]?.symbol?.[0]?.data;
+            if (decodedData) {
+              decodedTextDiv.textContent = decodedData;
+              downloadBtn.disabled = false;
+              downloadZipBtn.disabled = false;
             } else {
-              decodedTextDiv.textContent = "QR code not found.";
+              decodedTextDiv.textContent = "No data found in the QR code.";
             }
           })
-          .catch(error => {
+          .catch((error) => {
             console.error('Error decoding QR code:', error);
             decodedTextDiv.textContent = "Error decoding QR code.";
           });
@@ -172,58 +192,42 @@
       }
     });
 
+    // Download .conf file
     downloadBtn.addEventListener('click', () => {
       const textContent = decodedTextDiv.textContent;
-      
-      let filename = filenameInput.value.trim(); 
+      let filename = filenameInput.value.trim() || 'downloaded_config';
+      if (!filename.endsWith('.conf')) filename += '.conf';
 
-      if (!filename) {
-        filename = "downloaded_config.conf"; 
-      }
-
-      if (!filename.endsWith(".conf")) {
-        filename += ".conf";
-      }
-
-      const blob = new Blob([textContent], { type: "application/x-config" });
+      const blob = new Blob([textContent], { type: 'application/x-config' });
       const url = URL.createObjectURL(blob);
 
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = filename; 
+      link.download = filename;
+      link.click();
 
-      link.click(); 
-      URL.revokeObjectURL(url); 
-
-      // Disable input and decode button
-      qrInput.disabled = true;
-      decodeBtn.disabled = true;
-
-      downloadBtn.disabled = true;
-      startTimer(30); 
+      URL.revokeObjectURL(url);
     });
 
-    function startTimer(seconds) {
-      let remainingSeconds = seconds;
-      timerDiv.textContent = `Wait for ${remainingSeconds} seconds before downloading another file.`; 
+    // Download ZIP file
+    downloadZipBtn.addEventListener('click', () => {
+      const textContent = decodedTextDiv.textContent;
+      let filename = filenameInput.value.trim() || 'downloaded_config';
+      if (!filename.endsWith('.conf')) filename += '.conf'; // Internal file extension
 
-      downloadTimer = setInterval(() => {
-        remainingSeconds--;
-        timerDiv.textContent = `Wait for ${remainingSeconds} seconds before downloading another file.`;
-        saveTimerState(remainingSeconds); 
+      const zip = new JSZip();
+      zip.file(filename, textContent);
 
-        if (remainingSeconds <= 0) {
-          clearInterval(downloadTimer);
-          downloadBtn.disabled = false; 
-          timerDiv.textContent = ""; 
-          localStorage.removeItem('downloadTimer'); 
+      zip.generateAsync({ type: 'blob' }).then((content) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = `${filename.split('.')[0]}.zip`; // Always save as .zip
+        link.click();
 
-          // Enable input and decode button after timer finishes
-          qrInput.disabled = false;
-          decodeBtn.disabled = false;
-        }
-      }, 1000); 
-    }
+        URL.revokeObjectURL(link.href);
+      });
+    });
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </body>
 </html>
