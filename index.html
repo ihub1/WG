@@ -1,103 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>iCode WG Tool V1.0</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>QR Code Decoder</title>
   <style>
     body {
-      font-family: 'Roboto', sans-serif;
+      font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background-color: #f4f4f4; 
+      background-color: #f0f0f0;
       margin: 0;
-      padding: 10px; 
-      box-sizing: border-box; 
     }
 
     h1 {
-      color: #333; 
+      color: #333;
+    }
+
+    #container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       text-align: center;
-      font-size: 24px; 
-    }
-
-    h2 {
-      font-size: 18px; 
-    }
-
-    #qr-input {
-      margin: 10px; 
-      padding: 8px;
-      border: 1px solid #ddd; 
-      border-radius: 5px; 
-      width: calc(100% - 20px);
-      max-width: 400px;
-      box-sizing: border-box;
-    }
-
-    #decode-btn, #create-conf-btn {
-      background-color: #007bff; 
-      color: white;
-      padding: 10px 16px; 
-      border: none;
-      border-radius: 5px; 
-      cursor: pointer;
-      transition: background-color 0.3s ease; 
-      width: calc(100% - 20px); 
-      max-width: 300px;
-      box-sizing: border-box;
-      font-size: 16px; 
-    }
-
-    #decode-btn:hover, #create-conf-btn:hover {
-      background-color: #0056b3; 
-    }
-
-    #create-conf-btn {
-      margin-top: 10px; 
     }
 
     #decoded-text {
-      margin-top: 10px;
-      padding: 8px; 
-      border: 1px solid #ddd; 
-      min-height: 50px;
-      word-break: break-all;
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-height: 40px;
+      width: 300px;
+      font-family: monospace;
       white-space: pre-wrap; 
-      font-family: monospace; 
-      text-align: left; 
-      background-color: #fff; 
-      border-radius: 5px; 
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-      width: calc(100% - 20px);
-      max-width: 800px; 
-      box-sizing: border-box;
-      overflow-x: auto;
-      font-size: 14px;
+    }
+
+    button {
+      background-color: #4CAF50; /* Green */
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 5px;
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>iCode WG Tool V1.0</h1> 
+  <div id="container">
+    <h1>QR Code Decoder</h1>
+    <input type="file" id="qr-input" accept="image/*" />
+    <button id="decode-btn">Decode</button>
 
-  <input type="file" id="qr-input" accept="image/*" />
-  <button id="decode-btn">Decode from Image</button>
+    <h2>Decoded Text:</h2>
+    <div id="decoded-text"></div>
 
-  <h2>Decoded Text:</h2>
-  <div id="decoded-text"></div>
-
-  <button id="create-conf-btn" disabled>Create conf</button> 
-  <div id="download-link"></div> 
+    <button id="download-btn" disabled>Download conf</button> 
+  </div>
 
   <script>
     const qrInput = document.getElementById('qr-input');
     const decodeBtn = document.getElementById('decode-btn');
-    const createConfBtn = document.getElementById('create-conf-btn');
+    const downloadBtn = document.getElementById('download-btn'); 
     const decodedTextDiv = document.getElementById('decoded-text');
-    const downloadLinkDiv = document.getElementById('download-link');
 
     decodeBtn.addEventListener('click', () => {
       if (qrInput.files.length > 0) {
@@ -106,77 +77,44 @@
         const formData = new FormData();
         formData.append('file', qrCodeData);
 
-        fetch('https://api.qrserver.com/v1/read-qr-code/', { 
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data && data[0] && data[0].symbol && data[0].symbol[0] && data[0].symbol[0].data) {
-            const decodedText = data[0].symbol[0].data;
+        fetch('https://api.qrserver.com/v1/read-qr-code/', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data && data[0] && data[0].symbol && data[0].symbol[0] && data[0].symbol[0].data) {
+              decodedTextDiv.textContent = data[0].symbol[0].data;
 
-            createConfBtn.disabled = false; 
-
-            const formattedText = formatWireguardConfig(decodedText); 
-            decodedTextDiv.textContent = formattedText;
-          } else {
-            decodedTextDiv.textContent = "QR code not found in image.";
-          }
-        })
-        .catch(error => {
-          console.error('Error decoding QR code:', error);
-          decodedTextDiv.textContent = "Error decoding QR code.";
-        });
+              // Enable the download button after decoding
+              downloadBtn.disabled = false; 
+            } else {
+              decodedTextDiv.textContent = "QR code not found.";
+            }
+          })
+          .catch(error => {
+            console.error('Error decoding QR code:', error);
+            decodedTextDiv.textContent = "Error decoding QR code.";
+          });
       } else {
         alert("Please select a QR code image first.");
       }
     });
 
-    createConfBtn.addEventListener('click', () => {
+    downloadBtn.addEventListener('click', () => {
       const textContent = decodedTextDiv.textContent;
-      const filename = "wg0.conf"; 
+      const filename = "client1.conf"; // Updated filename
 
-      const blob = new Blob([textContent], { type: "application/x-config" }); 
+      const blob = new Blob([textContent], { type: "application/x-config" });
       const url = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = filename;
+      link.download = filename; 
 
-      downloadLinkDiv.innerHTML = ""; 
-      downloadLinkDiv.appendChild(link); 
       link.click(); 
-
       URL.revokeObjectURL(url); 
     });
-
-    function formatWireguardConfig(config) {
-      const lines = config.split('\n');
-      let formattedConfig = "";
-
-      const interfaceRegex = /^(Address|DNS|PrivateKey)\s*=\s*(.*)$/;
-      const peerRegex = /^(PublicKey|PresharedKey|AllowedIPs|Endpoint|PersistentKeepalive)\s*=\s*(.*)$/;
-
-      let currentSection = "";
-
-      for (const line of lines) {
-        let match;
-
-        if (line.startsWith("[Interface]")) {
-          currentSection = "Interface";
-          formattedConfig += line + "\n";
-        } else if (line.startsWith("[Peer]")) {
-          currentSection = "Peer";
-          formattedConfig += line + "\n";
-        } else if (currentSection === "Interface" && (match = line.match(interfaceRegex))) {
-          formattedConfig += `${match[1]} = ${match[2]}\n`;
-        } else if (currentSection === "Peer" && (match = line.match(peerRegex))) {
-          formattedConfig += `${match[1]} = ${match[2]}\n`;
-        }
-      }
-
-      return formattedConfig;
-    }
   </script>
 </body>
 </html>
