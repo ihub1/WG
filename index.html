@@ -59,6 +59,14 @@
       width: 100%; 
       box-sizing: border-box; 
     }
+
+    #filename-input {
+      margin-top: 10px; 
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: calc(100% - 20px);
+    }
   </style>
 </head>
 <body>
@@ -70,6 +78,7 @@
     <h2>Decoded Text:</h2>
     <div id="decoded-text"></div>
 
+    <input type="text" id="filename-input" placeholder="Enter filename" /> 
     <button id="download-btn" disabled>Download conf</button> 
   </div>
 
@@ -78,6 +87,7 @@
     const decodeBtn = document.getElementById('decode-btn');
     const downloadBtn = document.getElementById('download-btn'); 
     const decodedTextDiv = document.getElementById('decoded-text');
+    const filenameInput = document.getElementById('filename-input'); 
 
     decodeBtn.addEventListener('click', () => {
       if (qrInput.files.length > 0) {
@@ -111,7 +121,16 @@
 
     downloadBtn.addEventListener('click', () => {
       const textContent = decodedTextDiv.textContent;
-      const filename = "client1.conf"; 
+      
+      let filename = filenameInput.value.trim(); 
+
+      if (!filename) {
+        filename = "downloaded_config.conf"; 
+      }
+
+      if (!filename.endsWith(".conf")) {
+        filename += ".conf";
+      }
 
       const blob = new Blob([textContent], { type: "application/x-config" });
       const url = URL.createObjectURL(blob);
