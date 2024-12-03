@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>QR Code Decoder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
   <style>
     body {
       font-family: sans-serif;
@@ -12,10 +13,12 @@
       min-height: 100vh;
       background-color: #f0f0f0;
       margin: 0;
+      padding: 10px; 
     }
 
     h1 {
       color: #333;
+      font-size: 24px;
     }
 
     #container {
@@ -24,6 +27,8 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       text-align: center;
+      width: 90%; 
+      max-width: 400px; 
     }
 
     #decoded-text {
@@ -32,13 +37,15 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       min-height: 40px;
-      width: 300px;
+      width: calc(100% - 20px); 
       font-family: monospace;
       white-space: pre-wrap; 
+      font-size: 14px; 
+      overflow-x: auto; 
     }
 
     button {
-      background-color: #4CAF50; /* Green */
+      background-color: #4CAF50; 
       border: none;
       color: white;
       padding: 10px 15px;
@@ -49,6 +56,8 @@
       margin: 4px 2px;
       cursor: pointer;
       border-radius: 5px;
+      width: 100%; 
+      box-sizing: border-box; 
     }
   </style>
 </head>
@@ -86,7 +95,6 @@
             if (data && data[0] && data[0].symbol && data[0].symbol[0] && data[0].symbol[0].data) {
               decodedTextDiv.textContent = data[0].symbol[0].data;
 
-              // Enable the download button after decoding
               downloadBtn.disabled = false; 
             } else {
               decodedTextDiv.textContent = "QR code not found.";
@@ -103,7 +111,7 @@
 
     downloadBtn.addEventListener('click', () => {
       const textContent = decodedTextDiv.textContent;
-      const filename = "client1.conf"; // Updated filename
+      const filename = "client1.conf"; 
 
       const blob = new Blob([textContent], { type: "application/x-config" });
       const url = URL.createObjectURL(blob);
