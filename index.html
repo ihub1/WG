@@ -320,59 +320,75 @@
     <!-- Error Message -->
     <div id="error-message"></div>
 
-    <!-- Login/Register Form -->
+    <!-- Login Form -->
 <div id="authForm">
     <h3 id="authTitle">Login</h3>
     <input type="email" id="email" placeholder="Email" required>
     <input type="password" id="password" placeholder="Password" required>
-    
-    <!-- The first button (Login/ Register button) -->
+
+    <!-- Login Button -->
     <button id="authButton" onclick="handleAuth()">
         <i class="fa fa-sign-in-alt"></i> Login
     </button>
 
-    <!-- Error message div (in case of invalid login) -->
+    <!-- Error message div -->
     <div id="error-message"></div>
 
-    <!-- Button to toggle between Login and Register -->
+    <!-- Switch to Register / Login Form Button -->
     <button id="toggleButton" class="btn-secondary" onclick="toggleForm()">
         <i class="fa fa-user-plus"></i> Switch to Register
     </button>
 
-    <!-- Forgot Password button -->
+    <!-- Forgot Password Button -->
     <button class="btn-secondary" onclick="showPasswordReset()">
         <i class="fa fa-key"></i> Forgot Password?
     </button>
 </div>
 
-    <!-- QR Code Tool Section -->
-    <div id="qr-container">
-        <h1>iCode WG Tool V1.1</h1>
+<!-- Password Reset Form (hidden initially) -->
+<div id="resetForm" style="display: none;">
+    <h3>Reset Password</h3>
+    <input type="email" id="resetEmail" placeholder="Enter your email" required>
+    <button onclick="resetPassword()">Reset Password</button>
+    <button onclick="hidePasswordReset()">Back to Login</button>
+</div>
 
-        <div>
-            <h2>Upload QR Code</h2>
-            <button class="upload-btn">
-                <i class="fa fa-upload"></i> Upload QR Code
-            </button>
-            <input type="file" id="qr-input" accept="image/*">
-        </div>
 
-        <div>
-            <button id="decode-btn" disabled>Decode QR Code</button>
-        </div>
+<!-- QR Code Tool Section -->
+<div id="qr-container">
+    <h1>iCode WG Tool V1.1</h1>
 
-        <div id="decoded-text"></div>
-
-        <div>
-            <label for="filename-input">Filename:</label>
-            <input type="text" id="filename-input" placeholder="Enter filename (optional)">
-        </div>
-
-        <div>
-            <button id="download-btn" disabled>Download Config File</button>
-            <button id="download-zip-btn" disabled>Download as ZIP</button>
-        </div>
+    <div>
+        <h2>Upload QR Code</h2>
+        <button class="upload-btn">
+            <i class="fa fa-upload"></i> Upload QR Code
+        </button>
+        <input type="file" id="qr-input" accept="image/*">
     </div>
+
+    <div>
+        <button id="decode-btn" disabled>
+            <i class="fa fa-qrcode"></i> Decode QR Code
+        </button>
+    </div>
+
+    <div id="decoded-text"></div>
+
+    <div>
+        <label for="filename-input">Filename:</label>
+        <input type="text" id="filename-input" placeholder="Enter filename (optional)">
+    </div>
+
+    <div>
+        <button id="download-btn" disabled>
+            <i class="fa fa-download"></i> Download Config File
+        </button>
+        <button id="download-zip-btn" disabled>
+            <i class="fa fa-file-archive"></i> Download as ZIP
+        </button>
+    </div>
+</div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
