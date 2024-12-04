@@ -1,233 +1,476 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>iCode WG Tool V1.1</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"> <!-- Font Awesome for icons -->
-  <style>
-    /* Modern Theme */
-    body {
-      font-family: 'Arial', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #007bff, #6610f2);
-      color: #fff;
-      margin: 0;
-      padding: 10px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / QR Code Tool</title>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
-    h1 {
-      color: #fff;
-      font-size: 26px;
-      margin-bottom: 20px;
-      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
-    }
+        const firebaseConfig = {
+            apiKey: "AIzaSyC5NBKWmBCsXlQvKj4aOyeqn_98TAk3LGg",
+            authDomain: "login-35894.firebaseapp.com",
+            projectId: "login-35894",
+            storageBucket: "login-35894.firebasestorage.app",
+            messagingSenderId: "927068235495",
+            appId: "1:927068235495:web:b3de1473050f8a237fa442",
+            measurementId: "G-MSG0HC53H1"
+        };
 
-    #container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
-    }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
 
-    input[type="file"] {
-      display: none; /* Hide the default file input */
-    }
+        let isRegisterMode = false;
 
-    .file-label {
-      display: inline-block;
-      background: #007bff;
-      color: white;
-      padding: 12px 20px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-    }
+        // Load saved credentials if available
+        window.onload = function() {
+            const savedEmail = localStorage.getItem('email');
+            const savedPassword = localStorage.getItem('password');
+            if (savedEmail && savedPassword) {
+                document.getElementById("email").value = savedEmail;
+                document.getElementById("password").value = savedPassword;
+            }
+        }
 
-    .file-label:hover {
-      background: #0056b3;
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-      transform: translateY(-2px);
-    }
+       window.handleAuth = async function() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-    input[type="text"] {
-      margin-top: 10px;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      width: calc(100% - 20px);
-      font-size: 14px;
-      background: #f8f9fa;
-      color: #333;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    try {
+        if (isRegisterMode) {
+            // Attempt to create the user with the provided email and password
+            await createUserWithEmailAndPassword(auth, email, password);
+            // Save credentials after successful registration
+            localStorage.setItem('email', email);
+            localStorage.setItem('password', password);
+            showQrTool();
+        } else {
+            // Attempt to sign in if in login mode
+            await signInWithEmailAndPassword(auth, email, password);
+            // Save credentials after successful login
+            localStorage.setItem('email', email);
+            localStorage.setItem('password', password);
+            showQrTool();
+        }
+    } catch (error) {
+        console.error("Error: " + error.message);
+        
+        // Check if error is due to email already being registered during registration
+        if (isRegisterMode && error.code === 'auth/email-already-in-use') {
+            showErrorMessage("Email already registered");
+        } else {
+            showErrorMessage("Email or Password is incorrect");
+        }
     }
+}
 
-    #decoded-text {
-      margin-top: 15px;
-      padding: 15px;
-      border-radius: 8px;
-      min-height: 40px;
-      max-height: 150px; /* Limit the height */
-      overflow-y: auto; /* Enable vertical scrolling if content overflows */
-      width: calc(100% - 30px);
-      font-family: monospace;
-      white-space: pre-wrap; /* Preserve formatting but allow wrapping */
-      font-size: 14px;
-      background-color: #222;
-      color: #fff;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-    }
+        function showQrTool() {
+            document.getElementById('authForm').style.display = 'none';
+            document.getElementById('qr-container').style.display = 'block';
+            clearErrorMessage();
+        }
 
-    button {
-      display: block; /* Makes each button a block-level element */
-      width: 100%; /* Full width of container */
-      max-width: 300px; /* Optional: limit maximum button width */
-      margin: 10px 0; /* Spacing between buttons */
-      background: #007bff;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-    }
+        function showErrorMessage(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
 
-    button:hover {
-      background: #0056b3;
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-      transform: translateY(-2px);
-    }
+        function clearErrorMessage() {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'none';
+        }
 
-    button i {
-      margin-right: 8px;
-    }
+     window.toggleForm = function() {
+    const title = document.getElementById("authTitle");
+    const button = document.getElementById("authButton");
+    const toggleButton = document.getElementById("toggleButton");
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    if (isRegisterMode) {
+        // Switch to Login mode
+        title.textContent = "Login";
+        button.innerHTML = '<i class="fa fa-sign-in-alt"></i> Login'; // Update to Login button with icon
+        toggleButton.innerHTML = '<i class="fa fa-user-plus"></i> Switch to Register'; // Update to Switch to Register with icon
+        isRegisterMode = false;
+    } else {
+        // Switch to Register mode
+        title.textContent = "Register";
+        button.innerHTML = '<i class="fa fa-user-plus"></i> Register'; // Update to Register button with icon
+        toggleButton.innerHTML = '<i class="fa fa-sign-in-alt"></i> Switch to Login'; // Update to Switch to Login with icon
+        isRegisterMode = true;
     }
+}
 
-    #timer {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #ffc107;
-    }
-  </style>
+
+        window.showPasswordReset = function() {
+            document.getElementById("authForm").style.display = "none";
+            document.getElementById("resetForm").style.display = "block";
+        }
+
+        window.hidePasswordReset = function() {
+            document.getElementById("resetForm").style.display = "none";
+            document.getElementById("authForm").style.display = "block";
+        }
+
+        window.resetPassword = async function() {
+            const email = document.getElementById("resetEmail").value;
+            try {
+                await sendPasswordResetEmail(auth, email);
+                hidePasswordReset();
+            } catch (error) {
+                console.error("Error: " + error.message);
+            }
+        }
+    </script>
+
+    <!-- Include FontAwesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: #fff;
+        }
+
+        #authForm, #qr-container {
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            margin: 20px;
+        }
+
+        #qr-container {
+            display: none; /* Hidden until login is successful */
+        }
+
+        h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: black; /* Set the Login title to black */
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: black; /* Set iCode WG Tool V1.1 text to black */
+        }
+
+        input[type="email"], input[type="password"], input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #8e44ad;
+            margin-top: 5px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7d3c98;
+        }
+
+        .icon {
+            margin-right: 10px;
+        }
+
+        #decoded-text {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 40px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            background-color: #222;
+            color: white; /* Set contents of Decoded Text to white */
+        }
+
+        #timer {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #f39c12;
+        }
+
+        label[for="qr-input"] {
+            color: black; /* Set 'Choose QR Code Image' color to black */
+        }
+
+        #qr-input:invalid {
+            color: black; /* Set 'No file chosen' color to black */
+        }
+
+        #decoded-text {
+            color: white; /* Set contents of 'Decoded Text' to white */
+        }
+
+        h2 {
+            color: black; /* Set 'Decoded Text' label to black */
+        }
+
+        /* Modern Upload Button Style */
+        #qr-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background-color: #2980b9;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .upload-btn:hover {
+            background-color: #1c6e8c;
+        }
+
+        .upload-btn i {
+            margin-right: 8px;
+        }
+
+        /* Error Message Style */
+        #error-message {
+            display: none;
+            margin-top: 10px;
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        /* Adapt login forms to phone like the Tool page */
+        #authForm, #resetForm {
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            margin: 20px;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            #authForm, #resetForm {
+                width: 90%; /* Use most of the screen width */
+                padding: 20px; /* Slightly smaller padding */
+            }
+
+            input[type="email"], input[type="password"], input[type="text"] {
+                font-size: 0.9rem; /* Slightly smaller text size */
+                padding: 10px; /* Reduce padding for inputs */
+            }
+
+            button {
+                font-size: 0.9rem; /* Adjust button font size */
+                padding: 10px; /* Adjust button padding */
+            }
+
+            h3, h1 {
+                font-size: 1.5rem; /* Scale down headings */
+            }
+        }
+   </style>
 </head>
 <body>
-  <div id="container">
-    <h1>iCode WG Tool V1.1</h1>
+    <!-- Error Message -->
+    <div id="error-message"></div>
 
-    <!-- File Input Modernized -->
-    <label for="qr-input" class="file-label"><i class="fas fa-upload"></i> Choose QR Code Image</label>
-    <input type="file" id="qr-input" accept="image/*" />
+    <!-- Login/Register Form -->
+<div id="authForm">
+    <h3 id="authTitle">Login</h3>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    
+    <!-- The first button (Login/ Register button) -->
+    <button id="authButton" onclick="handleAuth()">
+        <i class="fa fa-sign-in-alt"></i> Login
+    </button>
 
-    <button id="decode-btn"><i class="fas fa-qrcode"></i> Decode</button>
+    <!-- Error message div (in case of invalid login) -->
+    <div id="error-message"></div>
 
-    <h2 style="color: #ffc107;">Decoded Text:</h2>
-    <div id="decoded-text"></div>
+    <!-- Button to toggle between Login and Register -->
+    <button id="toggleButton" class="btn-secondary" onclick="toggleForm()">
+        <i class="fa fa-user-plus"></i> Switch to Register
+    </button>
 
-    <input type="text" id="filename-input" placeholder="Enter Customer's name" />
-    <button id="download-btn" disabled><i class="fas fa-download"></i> Download conf</button>
-    <button id="download-zip-btn" disabled><i class="fas fa-file-archive"></i> Download Zip</button>
-    <div id="timer"></div>
-  </div>
+    <!-- Forgot Password button -->
+    <button class="btn-secondary" onclick="showPasswordReset()">
+        <i class="fa fa-key"></i> Forgot Password?
+    </button>
+</div>
 
-  <script>
-    const qrInput = document.getElementById('qr-input');
-    const decodeBtn = document.getElementById('decode-btn');
-    const decodedTextDiv = document.getElementById('decoded-text');
-    const downloadBtn = document.getElementById('download-btn');
-    const downloadZipBtn = document.getElementById('download-zip-btn');
-    const filenameInput = document.getElementById('filename-input');
+    <!-- QR Code Tool Section -->
+    <div id="qr-container">
+        <h1>iCode WG Tool V1.1</h1>
 
-    // Decode QR Code
-    decodeBtn.addEventListener('click', () => {
-      if (qrInput.files.length > 0) {
-        const qrCodeData = qrInput.files[0];
+        <div>
+            <h2>Upload QR Code</h2>
+            <button class="upload-btn">
+                <i class="fa fa-upload"></i> Upload QR Code
+            </button>
+            <input type="file" id="qr-input" accept="image/*">
+        </div>
 
-        const formData = new FormData();
-        formData.append('file', qrCodeData);
+        <div>
+            <button id="decode-btn" disabled>Decode QR Code</button>
+        </div>
 
-        fetch('https://api.qrserver.com/v1/read-qr-code/', {
-          method: 'POST',
-          body: formData,
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
+        <div id="decoded-text"></div>
+
+        <div>
+            <label for="filename-input">Filename:</label>
+            <input type="text" id="filename-input" placeholder="Enter filename (optional)">
+        </div>
+
+        <div>
+            <button id="download-btn" disabled>Download Config File</button>
+            <button id="download-zip-btn" disabled>Download as ZIP</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script>
+        // QR Code Upload and Decode functionality
+        const qrInput = document.getElementById('qr-input');
+        const decodeBtn = document.getElementById('decode-btn');
+        const decodedTextDiv = document.getElementById('decoded-text');
+        const downloadBtn = document.getElementById('download-btn');
+        const downloadZipBtn = document.getElementById('download-zip-btn');
+        const filenameInput = document.getElementById('filename-input');
+        const uploadBtn = document.querySelector('.upload-btn'); // Upload button
+
+        // Trigger file input click when Upload QR Code button is clicked
+        uploadBtn.addEventListener('click', function() {
+            qrInput.click();
+        });
+
+        qrInput.addEventListener('change', function() {
+            if (qrInput.files.length > 0) {
+                // Handle the file once selected
+                decodeBtn.disabled = false;
+                uploadBtn.disabled = true; // Disable the upload button after selecting a file
             }
-            return response.json();
-          })
-          .then((data) => {
-            const decodedData = data?.[0]?.symbol?.[0]?.data;
-            if (decodedData) {
-              decodedTextDiv.textContent = decodedData;
-              downloadBtn.disabled = false;
-              downloadZipBtn.disabled = false;
+        });
+
+        // Enable upload button if the user resets the file input
+        qrInput.addEventListener('click', function() {
+            // Clear the file input on click to allow re-upload
+            qrInput.value = '';
+            uploadBtn.disabled = false; // Re-enable the upload button if input is reset
+        });
+
+        decodeBtn.addEventListener('click', () => {
+            if (qrInput.files.length > 0) {
+                const qrCodeData = qrInput.files[0];
+                const formData = new FormData();
+                formData.append('file', qrCodeData);
+
+                fetch('https://api.qrserver.com/v1/read-qr-code/', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    const decodedData = data?.[0]?.symbol?.[0]?.data;
+                    if (decodedData) {
+                        decodedTextDiv.textContent = decodedData;
+                        downloadBtn.disabled = false;
+                        downloadZipBtn.disabled = false; // Enable download zip button
+                    } else {
+                        decodedTextDiv.textContent = "No data found in the QR code.";
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error decoding QR code:', error);
+                    decodedTextDiv.textContent = "Error decoding QR code.";
+                });
             } else {
-              decodedTextDiv.textContent = "No data found in the QR code.";
+                alert("Please select a QR code image first.");
             }
-          })
-          .catch((error) => {
-            console.error('Error decoding QR code:', error);
-            decodedTextDiv.textContent = "Error decoding QR code.";
-          });
-      } else {
-        alert("Please select a QR code image first.");
-      }
-    });
+        });
 
-    // Download .conf file
-    downloadBtn.addEventListener('click', () => {
-      const textContent = decodedTextDiv.textContent;
-      let filename = filenameInput.value.trim() || 'downloaded_config';
-      if (!filename.endsWith('.conf')) filename += '.conf';
+        downloadBtn.addEventListener('click', () => {
+            const textContent = decodedTextDiv.textContent;
+            let filename = filenameInput.value.trim() || 'downloaded_config';
+            if (!filename.endsWith('.conf')) filename += '.conf';
 
-      const blob = new Blob([textContent], { type: 'application/x-config' });
-      const url = URL.createObjectURL(blob);
+            const blob = new Blob([textContent], { type: 'application/x-config' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
 
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.click();
+        downloadZipBtn.addEventListener('click', () => {
+            const textContent = decodedTextDiv.textContent;
+            let filename = filenameInput.value.trim() || 'downloaded_config';
+            if (!filename.endsWith('.conf')) filename += '.conf';
 
-      URL.revokeObjectURL(url);
-    });
+            const zip = new JSZip();
+            zip.file(filename, textContent);
+            zip.generateAsync({ type: 'blob' }).then((content) => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${filename.split('.')[0]}.zip`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            });
+        });
+    </script>
 
-    // Download ZIP file
-    downloadZipBtn.addEventListener('click', () => {
-      const textContent = decodedTextDiv.textContent;
-      let filename = filenameInput.value.trim() || 'downloaded_config';
-      if (!filename.endsWith('.conf')) filename += '.conf'; // Internal file extension
-
-      const zip = new JSZip();
-      zip.file(filename, textContent);
-
-      zip.generateAsync({ type: 'blob' }).then((content) => {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(content);
-        link.download = `${filename.split('.')[0]}.zip`; // Always save as .zip
-        link.click();
-
-        URL.revokeObjectURL(link.href);
-      });
-    });
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </body>
 </html>
